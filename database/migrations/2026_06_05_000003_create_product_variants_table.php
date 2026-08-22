@@ -17,8 +17,10 @@ return new class extends Migration
             $table->string('sku');
             $table->string('barcode')->nullable();
             $table->decimal('price', 12, 2)->default(0.00);
+            $table->decimal('purchase_price', 12, 2)->nullable();
             $table->decimal('discount_price', 12, 2)->nullable();
             $table->integer('stock')->default(0);
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

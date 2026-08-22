@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('type')->default(AccountTypeEnum::CASH->value);
             $table->string('account_number')->nullable();
+            $table->decimal('balance', 15, 2)->default(0.00);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

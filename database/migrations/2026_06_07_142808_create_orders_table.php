@@ -23,11 +23,14 @@ return new class extends Migration
             $table->decimal('discount_amount', 10, 2)->default(0.00);
             $table->decimal('grand_total', 10, 2);
             $table->string('status')->default(OrderStatusEnum::PLACED->value);
+            $table->string('parcel_booking_status')->nullable()->default('none');
+            $table->string('latest_courier_provider')->nullable();
             $table->foreignId('created_by_id')->nullable()->constrained('admins')->onDelete('set null');
             $table->softDeletes();
             $table->timestamps();
 
             $table->decimal('tax_amount', 10, 2)->default(0.00);
+            $table->decimal('delivery_charge', 10, 2)->nullable()->default(null);
             $table->decimal('paid_amount', 10, 2);
             $table->decimal('change_amount', 10, 2)->default(0.00);
         });

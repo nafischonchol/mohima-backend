@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('type'); // 'select' or 'text'
             $table->json('values')->nullable(); // JSON array of predefined values, e.g. ["Red", "Green"]
+            $table->boolean('is_default_specification')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
