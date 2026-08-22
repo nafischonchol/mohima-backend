@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 function responseSuccess($data, $message = 'Success', $code = 200)
 {
@@ -39,6 +41,10 @@ function extractIdFromSlug($slug_url)
 
 function responseError(string $message, string|int|null $code = 500, $exception = null, $data = null)
 {
+    if ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {
+        $code = 404;
+        $message = 'Resource not found.';
+    }
 
     Log::error($exception);
     if (! is_int($code)) {
