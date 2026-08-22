@@ -336,6 +336,7 @@ class CosmeticsSeeder extends Seeder
             $attribute = Attribute::updateOrCreate(
                 ['name' => $attrData['name']],
                 [
+                    'slug' => Str::slug($attrData['name']),
                     'type' => $attrData['type'],
                     'values' => $valueStringsOnly,
                     'is_active' => true,

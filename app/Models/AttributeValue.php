@@ -18,9 +18,31 @@ class AttributeValue extends Model
         'is_active',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($value) {
+            if ($value->attribute && $value->attribute->slug) {
+                \Illuminate\Support\Facades\Cache::forget('customer_attribute_values_' . \Illuminate\Support\Str::slug($value->attribute->slug));
+            }
+        });
+
+        static::deleted(function ($value) {
+            if ($value->attribute && $value->attribute->slug) {
+                \Illuminate\Support\Facades\Cache::forget('customer_attribute_values_' . \Illuminate\Support\Str::slug($value->attribute->slug));
+            }
+        });
+    }
+
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 
     public function attribute()
     {

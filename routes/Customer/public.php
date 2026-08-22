@@ -37,4 +37,4 @@ Route::get('sitemap-data/products', [SitemapController::class, 'products']);
 Route::get('sitemap-data/categories', [SitemapController::class, 'categories']);
 Route::get('sitemap-data/brands', [SitemapController::class, 'brands']);
 
-Route::get('attributes/{name}/values', [AttributeController::class, 'getAttributeValues']);
+Route::get('attributes/{slug}/values', [AttributeController::class, 'getAttributeValues']);

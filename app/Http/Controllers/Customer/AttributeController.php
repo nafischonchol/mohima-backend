@@ -10,10 +10,10 @@ class AttributeController extends Controller
 {
     public function __construct(public AttributeService $attrService) {}
 
-    public function getAttributeValues(string $name, Request $request)
+    public function getAttributeValues(string $slug, Request $request)
     {
         try {
-            return $this->attrService->getAttributeValues($name, $request);
+            return $this->attrService->getAttributeValues($slug, $request);
         } catch (\Throwable $th) {
             return responseError('Failed to fetch attribute values: ' . $th->getMessage(), 500);
         }

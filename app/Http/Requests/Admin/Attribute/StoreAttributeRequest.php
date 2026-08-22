@@ -17,6 +17,7 @@ class StoreAttributeRequest extends BaseFormRequest
                 'max:255',
                 Rule::unique('attributes', 'name'),
             ],
+            'slug' => ['nullable', 'string', 'max:255'],
             'type' => ['required', 'string', 'in:text,rich_text,select,multi_select'],
             'values' => ['nullable'],
             'is_active' => ['boolean'],

@@ -13,6 +13,7 @@ class AttributeResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'slug' => $this->slug,
             'type' => $this->type,
             'values' => $this->when(
                 $this->relationLoaded('attributeValues') || isset($this->values),

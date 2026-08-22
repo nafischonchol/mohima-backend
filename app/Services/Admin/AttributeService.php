@@ -8,6 +8,7 @@ use App\Http\Resources\AttributeResource;
 use App\Models\Attribute;
 use App\Traits\UploadAble;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AttributeService
 {
@@ -46,6 +47,7 @@ class AttributeService
 
             $attribute = Attribute::create([
                 'name' => $data['name'],
+                'slug' => !empty($data['slug']) ? Str::slug($data['slug']) :Str::slug($data['name']),
                 'type' => $data['type'],
                 'values' => null,
                 'is_active' => $data['is_active'],
@@ -66,7 +68,7 @@ class AttributeService
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return responseError('Failed to create attribute: '.$e->getMessage(), 500);
+            return responseError('Failed to create attribute: ' . $e->getMessage(), 500);
         }
     }
 
@@ -89,6 +91,7 @@ class AttributeService
 
             $attribute->update([
                 'name' => $data['name'],
+                'slug' => !empty($data['slug']) ? Str::slug($data['slug']) :Str::slug($data['name']),
                 'type' => $data['type'],
                 'is_active' => $data['is_active'],
                 'is_default_specification' => $data['is_default_specification'],
@@ -104,11 +107,11 @@ class AttributeService
 
             DB::commit();
 
-            return responseSuccess(AttributeResource::make($attribute->load('attributeValues')), 'Attribute updated successfully');
+            return responseSuccess([], 'Attribute updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return responseError('Failed to update attribute: '.$e->getMessage(), 500);
+            return responseError('Failed to update attribute: ' . $e->getMessage(), 500);
         }
     }
 

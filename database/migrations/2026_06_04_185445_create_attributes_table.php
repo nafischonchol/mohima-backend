@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('attributes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug');
             $table->string('type'); // 'select' or 'text'
             $table->json('values')->nullable(); // JSON array of predefined values, e.g. ["Red", "Green"]
             $table->boolean('is_default_specification')->default(false);

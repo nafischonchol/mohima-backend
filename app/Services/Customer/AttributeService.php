@@ -9,18 +9,19 @@ use Illuminate\Support\Facades\Cache;
 
 class AttributeService
 {
-    public function getAttributeValues(string $name, Request $request)
+    public function getAttributeValues(string $slug, Request $request)
     {
-        $cacheKey = 'customer_attribute_values_' . strtolower($name);
+        $formattedSlug = \Illuminate\Support\Str::slug($slug);
+        $cacheKey = 'customer_attribute_values_' . $formattedSlug;
 
         if (Cache::has($cacheKey)) {
             $attribute = Cache::get($cacheKey);
         } else {
             $attribute = Attribute::with(['attributeValues' => function ($query) {
-                $query->where('is_active', true);
+                $query->active();
             }])
-                ->where('name', $name)
-                ->where('is_active', true)
+                ->where('slug', $formattedSlug)
+                ->active()
                 ->first();
 
             if ($attribute) {
@@ -29,7 +30,7 @@ class AttributeService
         }
 
         if (!$attribute) {
-            return responseError("Attribute '{$name}' not found.", 404);
+            return responseError("Attribute '{$slug}' not found.", 404);
         }
 
         return responseSuccess(AttributeResource::make($attribute));
