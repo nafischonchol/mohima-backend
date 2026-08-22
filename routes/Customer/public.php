@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\StoreSetupController;
+use App\Http\Controllers\Customer\AttrController;
+use App\Http\Controllers\Customer\AttributeController;
 use App\Http\Controllers\Customer\AuthController;
 use App\Http\Controllers\Customer\BannerController;
 use App\Http\Controllers\Customer\BrandController;
@@ -35,5 +37,4 @@ Route::get('sitemap-data/products', [SitemapController::class, 'products']);
 Route::get('sitemap-data/categories', [SitemapController::class, 'categories']);
 Route::get('sitemap-data/brands', [SitemapController::class, 'brands']);
 
-
-
+Route::get('attributes/{name}/values', [AttributeController::class, 'getAttributeValues']);

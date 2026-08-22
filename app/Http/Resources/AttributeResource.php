@@ -4,63 +4,28 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class AttributeResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
+
     public function toArray(Request $request): array
     {
-        $attributeValues = $this->attributeValues;
-
-        $valuesData = [];
-        if ($attributeValues && $attributeValues->count() > 0) {
-            foreach ($attributeValues as $val) {
-                $valuesData[] = [
-                    'id' => $val->id,
-                    'value' => $val->value,
-                    'image' => $val->image ? Storage::url($val->image) : null,
-                    'image_relative' => $val->image,
-                    'meta_title' => $val->meta_title,
-                    'meta_description' => $val->meta_description,
-                    'is_active' => (bool)($val->is_active ?? true),
-                ];
-            }
-        } elseif (is_array($this->values)) {
-            foreach ($this->values as $val) {
-                if (is_array($val)) {
-                    $valuesData[] = [
-                        'id' => $val['id'] ?? null,
-                        'value' => $val['value'] ?? '',
-                        'image' => !empty($val['image']) ? Storage::url($val['image']) : null,
-                        'image_relative' => $val['image'] ?? null,
-                        'meta_title' => $val['meta_title'] ?? null,
-                        'meta_description' => $val['meta_description'] ?? null,
-                        'is_active' => (bool)($val['is_active'] ?? true),
-                    ];
-                } else {
-                    $valuesData[] = [
-                        'id' => null,
-                        'value' => (string)$val,
-                        'image' => null,
-                        'image_relative' => null,
-                        'meta_title' => null,
-                        'meta_description' => null,
-                        'is_active' => true,
-                    ];
-                }
-            }
-        }
-
         return [
             'id' => $this->id,
             'name' => $this->name,
             'type' => $this->type,
-            'values' => $valuesData,
+            'values' => $this->when(
+                $this->relationLoaded('attributeValues') || isset($this->values),
+                function () {
+                    if ($this->relationLoaded('attributeValues') && $this->attributeValues->count() > 0) {
+                        return AttributeValueResource::collection($this->attributeValues);
+                    }
+                    if (isset($this->values) && is_array($this->values)) {
+                        return AttributeValueResource::collection($this->values);
+                    }
+                    return [];
+                }
+            ),
             'is_active' => (bool)$this->is_active,
             'is_default_specification' => (bool)$this->is_default_specification,
             'created_at' => $this->created_at,
