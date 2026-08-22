@@ -54,7 +54,7 @@ class AttributeService
                 'is_default_specification' => $data['is_default_specification'],
             ]);
 
-            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
+            if ($data['type'] === Attribute::TYPE['TEXT'] || $data['type'] === Attribute::TYPE['RICH_TEXT']) {
                 $syncedValues = null;
             } else {
                 $syncedValues = $this->syncAttributeValues($attribute, $rawValues, $request);
@@ -97,7 +97,7 @@ class AttributeService
                 'is_default_specification' => $data['is_default_specification'],
             ]);
 
-            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
+            if ($data['type'] === Attribute::TYPE['TEXT'] || $data['type'] === Attribute::TYPE['RICH_TEXT']) {
                 $syncedValues = null;
             } else {
                 $syncedValues = $this->syncAttributeValues($attribute, $rawValues, $request);
@@ -117,7 +117,7 @@ class AttributeService
 
     private function syncAttributeValues(Attribute $attribute, $valuesInput, $request): array
     {
-        if (is_null($valuesInput) || $attribute->type === 'text' || $attribute->type === 'rich_text') {
+        if (is_null($valuesInput) || $attribute->type === Attribute::TYPE['TEXT'] || $attribute->type === Attribute::TYPE['RICH_TEXT']) {
             foreach ($attribute->attributeValues as $oldVal) {
                 if ($oldVal->image) {
                     $this->deleteFile($oldVal->image);

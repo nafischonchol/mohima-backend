@@ -86,9 +86,9 @@ class GetProductEditPayloadAction
                 return null;
             }
 
-            if ($attr->type === 'text' || $attr->type === 'rich_text') {
+            if ($attr->type === Attribute::TYPE['TEXT'] || $attr->type === Attribute::TYPE['RICH_TEXT']) {
                 $value = $spec->custom_value;
-            } elseif ($attr->type === 'select') {
+            } elseif ($attr->type === Attribute::TYPE['SELECT']) {
                 $value = $spec->predefinedValues->first()?->value;
             } else {
                 $value = $spec->predefinedValues->pluck('value')->toArray();

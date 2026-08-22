@@ -32,6 +32,7 @@ Route::get('product/{slug_url}', [ProductController::class, 'show']);
 Route::get('business-profile', [StoreSetupController::class, 'show']);
 Route::get('districts', [DistrictController::class, 'index']);
 Route::get('products/filter', [ProductController::class, 'filterProducts']);
+Route::get('filterable-data', [ProductController::class, 'getFilterableData']);
 Route::get('sitemap-data', [SitemapController::class, 'index']);
 Route::get('sitemap-data/products', [SitemapController::class, 'products']);
 Route::get('sitemap-data/categories', [SitemapController::class, 'categories']);

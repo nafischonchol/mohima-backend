@@ -6,6 +6,9 @@ use App\Enums\OrderStatusEnum;
 use App\Http\Requests\Customer\ProductFilterRequest;
 use App\Http\Resources\Customer\ProductDetailsResource;
 use App\Http\Resources\Customer\ProductResource;
+use App\Models\Attribute;
+use App\Models\AttributeValue;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -181,6 +184,47 @@ class ProductService
             $query->where('brand_id', $request->input('brand_id'));
         }
 
+        if ($request->filled('concern_id')) {
+            $concernId = $request->input('concern_id');
+            $query->whereHas('specifications', function ($specQ) use ($concernId) {
+                $specQ->whereHas('predefinedValues', function ($pvQ) use ($concernId) {
+                    $pvQ->where('attribute_values.id', $concernId);
+                });
+            });
+        }
+
+        if ($request->filled('attribute_value_id')) {
+            $attrValIds = is_array($request->input('attribute_value_id'))
+                ? $request->input('attribute_value_id')
+                : explode(',', $request->input('attribute_value_id'));
+
+            $query->where(function ($q) use ($attrValIds) {
+                $q->whereHas('specifications', function ($specQ) use ($attrValIds) {
+                    $specQ->whereHas('predefinedValues', function ($pvQ) use ($attrValIds) {
+                        $pvQ->whereIn('attribute_values.id', $attrValIds);
+                    });
+                })->orWhereHas('variants', function ($vQ) use ($attrValIds) {
+                    $vQ->whereHas('attributeValues', function ($avQ) use ($attrValIds) {
+                        $avQ->whereIn('attribute_values.id', $attrValIds);
+                    });
+                });
+            });
+        }
+
+        if ($request->filled('min_price')) {
+            $minPrice = (float) $request->input('min_price');
+            $query->whereHas('variants', function ($q) use ($minPrice) {
+                $q->where('price', '>=', $minPrice);
+            });
+        }
+
+        if ($request->filled('max_price')) {
+            $maxPrice = (float) $request->input('max_price');
+            $query->whereHas('variants', function ($q) use ($maxPrice) {
+                $q->where('price', '<=', $maxPrice);
+            });
+        }
+
         if ($request->filled('is_stock')) {
             $isStock = filter_var($request->input('is_stock'), FILTER_VALIDATE_BOOLEAN);
             if ($isStock) {
@@ -228,6 +272,44 @@ class ProductService
             'items' => ProductResource::collection($products),
             'pagination' => pagination($products)
         ]);
+    }
+
+    public function getFilterableData()
+    {
+        return Cache::remember('customer_filterable_data', now()->addHours(2), function () {
+            $categories = Category::where('is_active', true)
+                ->whereNull('parent_id')
+                ->with(['children' => function ($q) {
+                    $q->where('is_active', true);
+                }])
+                ->select(['id', 'name', 'slug', 'parent_id', 'icon'])
+                ->get();
+
+            $brands = Brand::where('is_active', true)
+                ->select(['id', 'name', 'slug', 'icon'])
+                ->get();
+
+            $attributes = Attribute::where('is_active', true)
+                ->whereIn('type', [Attribute::TYPE['SELECT'], Attribute::TYPE['MULTI_SELECT']])
+                ->with(['attributeValues' => function ($q) {
+                    $q->where('is_active', true)->select(['id', 'attribute_id', 'value', 'image']);
+                }])
+                ->select(['id', 'name', 'slug', 'type'])
+                ->get();
+
+            $minPrice = ProductVariant::active()->min('price') ?? 0;
+            $maxPrice = ProductVariant::active()->max('price') ?? 5000;
+
+            return responseSuccess([
+                'categories' => $categories,
+                'brands' => $brands,
+                'attributes' => $attributes,
+                'price_range' => [
+                    'min' => (float) $minPrice,
+                    'max' => (float) $maxPrice,
+                ]
+            ]);
+        });
     }
 }
 

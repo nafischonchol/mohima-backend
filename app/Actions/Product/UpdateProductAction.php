@@ -167,7 +167,7 @@ class UpdateProductAction
             return;
         }
 
-        if ($attributeObj->type === 'text' || $attributeObj->type === 'rich_text') {
+        if ($attributeObj->type === Attribute::TYPE['TEXT'] || $attributeObj->type === Attribute::TYPE['RICH_TEXT']) {
             $this->saveTextSpecification($product, $attributeId, $value);
         } else {
             $this->savePredefinedSpecification($product, $attributeId, $value);

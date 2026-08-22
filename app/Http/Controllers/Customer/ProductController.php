@@ -19,6 +19,15 @@ class ProductController extends Controller
             return responseError($th->getMessage(), 500, $th);
         }
     }
+
+    public function getFilterableData()
+    {
+        try {
+            return $this->product_service->getFilterableData();
+        } catch (\Throwable $th) {
+            return responseError($th->getMessage(), 500, $th);
+        }
+    }
     public function popularProducts(Request $request)
     {
         try {

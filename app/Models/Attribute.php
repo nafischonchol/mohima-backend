@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class Attribute extends Model
 {
@@ -21,22 +23,29 @@ class Attribute extends Model
 
         static::saving(function ($attribute) {
             if (empty($attribute->slug) || $attribute->isDirty('name')) {
-                $attribute->slug = \Illuminate\Support\Str::slug($attribute->name);
+                $attribute->slug = Str::slug($attribute->name);
             }
         });
 
         static::saved(function ($attribute) {
             if ($attribute->slug) {
-                \Illuminate\Support\Facades\Cache::forget('customer_attribute_values_' . \Illuminate\Support\Str::slug($attribute->slug));
+                Cache::forget('customer_attribute_values_' . Str::slug($attribute->slug));
             }
         });
 
         static::deleted(function ($attribute) {
             if ($attribute->slug) {
-                \Illuminate\Support\Facades\Cache::forget('customer_attribute_values_' . \Illuminate\Support\Str::slug($attribute->slug));
+                Cache::forget('customer_attribute_values_' . Str::slug($attribute->slug));
             }
         });
     }
+
+    public const TYPE = [
+        "RICH_TEXT" => "rich_text",
+        "TEXT" => "text",
+        "SELECT" => "select",
+        "MULTI_SELECT" => "multi_select",
+    ];
 
     protected $casts = [
         'values' => 'array',
