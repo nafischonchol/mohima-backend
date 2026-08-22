@@ -79,6 +79,7 @@ class CreateProductAction
             'name' => $request->name,
             'bangla_name' => $request->bangla_name,
             'slug' => Str::slug($request->name),
+            'short_description' => $request->short_description,
             'description' => $request->description,
             'category_id' => $request->category_id,
             'brand_id' => $request->brand_id,

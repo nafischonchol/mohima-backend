@@ -46,6 +46,7 @@ class ProductDetailResource extends JsonResource
             'bangla_name' => $this->bangla_name,
             'slug' => $this->slug,
             'description' => $this->description,
+            'short_description' => $this->short_description,
             'category' => $this->relationLoaded('category') && $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,

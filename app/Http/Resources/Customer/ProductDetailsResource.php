@@ -96,6 +96,7 @@ class ProductDetailsResource extends JsonResource
             'slug' => $this->slug,
             'slug_url' => $this->slug_url,
             'description' => $this->description,
+            'short_description' => $this->short_description,
             'meta_title' => $this->meta_title,
             'meta_description' => $this->meta_description,
             'meta_keywords' => $this->meta_keywords,

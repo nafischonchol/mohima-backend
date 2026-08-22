@@ -13,6 +13,7 @@ class Product extends Model
         'name',
         'bangla_name',
         'slug',
+        'short_description',
         'description',
         'category_id',
         'brand_id',

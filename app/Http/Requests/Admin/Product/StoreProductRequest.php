@@ -61,6 +61,7 @@ class StoreProductRequest extends BaseFormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'bangla_name' => ['nullable', 'string', 'max:255'],
+            'short_description' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string'],
             'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('is_active', true)],
             'brand_id' => ['nullable', 'integer', Rule::exists('brands', 'id')->where('is_active', true)],

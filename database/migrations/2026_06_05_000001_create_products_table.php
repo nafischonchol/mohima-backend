@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('bangla_name')->nullable();
             $table->string('slug');
             $table->longText('description')->nullable();
+            $table->text('short_description')->nullable();
             $table->foreignId('category_id')->constrained('categories');
             $table->foreignId('brand_id')->nullable()->constrained('brands');
             $table->foreignId('unit_id')->nullable()->constrained('units')->nullOnDelete();

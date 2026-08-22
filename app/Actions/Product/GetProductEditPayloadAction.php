@@ -34,6 +34,7 @@ class GetProductEditPayloadAction
             'name' => $product->name,
             'bangla_name' => $product->bangla_name,
             'description' => $product->description,
+            'short_description' => $product->short_description,
             'category_id' => $product->category_id,
             'brand_id' => $product->brand_id,
             'unit_id' => $product->unit_id,
