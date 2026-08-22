@@ -131,6 +131,7 @@ class ProductSeeder extends Seeder
                 'name' => $productName,
                 'bangla_name' => $tpl['bangla_name'],
                 'slug' => $slug,
+                'short_description' => 'Discover authentic Korean skincare & beauty formulation with ' . $productName . '. Formulated for gentle daily use, deeply hydrating, and suitable for modern skin needs.',
                 'description' => '<p>Discover authentic Korean skincare & beauty formulation with <strong>' . $productName . '</strong>. Formulated for gentle daily use, deeply hydrating, and suitable for modern skin needs.</p><p>Key Benefits:</p><ul><li>Deep Hydration & Skin Barrier Protection</li><li>Dermatologically Tested</li><li>100% Authentic K-Beauty Import</li></ul>',
                 'category_id' => $category->id,
                 'brand_id' => $brand ? $brand->id : null,
