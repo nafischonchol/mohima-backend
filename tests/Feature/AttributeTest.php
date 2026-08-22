@@ -6,6 +6,8 @@ use App\Models\Admin;
 use App\Models\Attribute;
 use App\Models\AttributeValue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AttributeTest extends TestCase
@@ -41,7 +43,7 @@ class AttributeTest extends TestCase
         $response->assertStatus(200);
 
         $attribute = Attribute::first();
-        $this->assertEquals(['L', 'XL'], $attribute->values);
+        $this->assertCount(2, $attribute->values);
 
         // Check attribute_values table
         $this->assertDatabaseHas('attribute_values', [
@@ -54,6 +56,35 @@ class AttributeTest extends TestCase
         ]);
     }
 
+    public function test_creating_attribute_with_option_image()
+    {
+        $disk = config('filesystems.default', 'public');
+        Storage::fake($disk);
+        $this->authenticateAdmin();
+
+        $file = UploadedFile::fake()->image('swatch_red.jpg');
+
+        $response = $this->postJson('/admin/attributes', [
+            'name' => 'Color',
+            'type' => 'select',
+            'values' => [
+                ['value' => 'Red'],
+                ['value' => 'Blue'],
+            ],
+            'value_image_0' => $file,
+            'is_active' => true,
+        ]);
+
+        $response->assertStatus(200);
+
+        $attribute = Attribute::first();
+        $redVal = AttributeValue::where('attribute_id', $attribute->id)->where('value', 'Red')->first();
+
+        $this->assertNotNull($redVal);
+        $this->assertNotNull($redVal->image);
+        Storage::disk($disk)->assertExists($redVal->image);
+    }
+
     public function test_updating_attribute_soft_deletes_removed_values_and_adds_new_ones()
     {
         $this->authenticateAdmin();
@@ -61,11 +92,10 @@ class AttributeTest extends TestCase
         $attribute = Attribute::create([
             'name' => 'Size',
             'type' => 'select',
-            'values' => ['L', 'XL'],
+            'values' => null,
             'is_active' => true,
         ]);
 
-        // Sync values manually for the setup
         $val1 = AttributeValue::create(['attribute_id' => $attribute->id, 'value' => 'L']);
         $val2 = AttributeValue::create(['attribute_id' => $attribute->id, 'value' => 'XL']);
 
@@ -107,7 +137,7 @@ class AttributeTest extends TestCase
         $attribute = Attribute::create([
             'name' => 'Size',
             'type' => 'select',
-            'values' => ['L', 'XL'],
+            'values' => null,
             'is_active' => true,
         ]);
 
@@ -140,7 +170,6 @@ class AttributeTest extends TestCase
             'deleted_at' => null,
         ]);
 
-        // Total count of attribute values for this attribute should be 2, not 3
         $this->assertEquals(2, AttributeValue::withTrashed()->where('attribute_id', $attribute->id)->count());
         $this->assertEquals(2, AttributeValue::where('attribute_id', $attribute->id)->count());
     }

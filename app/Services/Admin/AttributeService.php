@@ -6,20 +6,23 @@ use App\Http\Requests\Admin\Attribute\StoreAttributeRequest;
 use App\Http\Requests\Admin\Attribute\UpdateAttributeRequest;
 use App\Http\Resources\AttributeResource;
 use App\Models\Attribute;
+use App\Traits\UploadAble;
 use Illuminate\Support\Facades\DB;
 
 class AttributeService
 {
+    use UploadAble;
+
     public function index()
     {
-        $attributes = Attribute::latest()->get();
+        $attributes = Attribute::with('attributeValues')->latest()->get();
 
         return responseSuccess(AttributeResource::collection($attributes));
     }
 
     public function show(string $id)
     {
-        $attribute = Attribute::findOrFail($id);
+        $attribute = Attribute::with('attributeValues')->findOrFail($id);
 
         return responseSuccess(AttributeResource::make($attribute));
     }
@@ -30,21 +33,36 @@ class AttributeService
         try {
             $data = $request->validated();
 
-            // Set is_active and is_default_specification correctly
             $data['is_active'] = $request->boolean('is_active', true);
             $data['is_default_specification'] = $request->boolean('is_default_specification', false);
 
-            // Clean values if type is text or rich_text
-            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
-                $data['values'] = null;
+            $rawValues = $request->input('values');
+            if (is_string($rawValues)) {
+                $decoded = json_decode($rawValues, true);
+                if (is_array($decoded)) {
+                    $rawValues = $decoded;
+                }
             }
 
-            $attribute = Attribute::create($data);
-            $this->syncAttributeValues($attribute, $data['values'] ?? []);
+            $attribute = Attribute::create([
+                'name' => $data['name'],
+                'type' => $data['type'],
+                'values' => null,
+                'is_active' => $data['is_active'],
+                'is_default_specification' => $data['is_default_specification'],
+            ]);
+
+            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
+                $syncedValues = null;
+            } else {
+                $syncedValues = $this->syncAttributeValues($attribute, $rawValues, $request);
+            }
+
+            $attribute->update(['values' => $syncedValues]);
 
             DB::commit();
 
-            return responseSuccess(AttributeResource::make($attribute), 'Attribute created successfully');
+            return responseSuccess(AttributeResource::make($attribute->load('attributeValues')), 'Attribute created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -58,21 +76,35 @@ class AttributeService
         try {
             $data = $request->validated();
 
-            // Set is_active and is_default_specification correctly
             $data['is_active'] = $request->boolean('is_active', true);
             $data['is_default_specification'] = $request->boolean('is_default_specification', false);
 
-            // Clean values if type is text or rich_text
-            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
-                $data['values'] = null;
+            $rawValues = $request->input('values');
+            if (is_string($rawValues)) {
+                $decoded = json_decode($rawValues, true);
+                if (is_array($decoded)) {
+                    $rawValues = $decoded;
+                }
             }
 
-            $attribute->update($data);
-            $this->syncAttributeValues($attribute, $data['values'] ?? []);
+            $attribute->update([
+                'name' => $data['name'],
+                'type' => $data['type'],
+                'is_active' => $data['is_active'],
+                'is_default_specification' => $data['is_default_specification'],
+            ]);
+
+            if ($data['type'] === 'text' || $data['type'] === 'rich_text') {
+                $syncedValues = null;
+            } else {
+                $syncedValues = $this->syncAttributeValues($attribute, $rawValues, $request);
+            }
+
+            $attribute->update(['values' => $syncedValues]);
 
             DB::commit();
 
-            return responseSuccess(AttributeResource::make($attribute), 'Attribute updated successfully');
+            return responseSuccess(AttributeResource::make($attribute->load('attributeValues')), 'Attribute updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -80,39 +112,114 @@ class AttributeService
         }
     }
 
-    private function syncAttributeValues(Attribute $attribute, ?array $values): void
+    private function syncAttributeValues(Attribute $attribute, $valuesInput, $request): array
     {
-        if (is_null($values)) {
-            $values = [];
+        if (is_null($valuesInput) || $attribute->type === 'text' || $attribute->type === 'rich_text') {
+            foreach ($attribute->attributeValues as $oldVal) {
+                if ($oldVal->image) {
+                    $this->deleteFile($oldVal->image);
+                }
+                $oldVal->delete();
+            }
+            return [];
         }
 
-        $values = array_map('trim', $values);
-        $values = array_filter($values, fn ($val) => $val !== '');
+        if (!is_array($valuesInput)) {
+            $valuesInput = [];
+        }
 
-        // Fetch existing attribute values (including soft-deleted ones)
         $existingValues = $attribute->attributeValues()->withTrashed()->get();
+        $existingById = $existingValues->keyBy('id');
         $existingByValue = $existingValues->keyBy('value');
 
         $processedIds = [];
+        $savedValuesList = [];
 
-        foreach ($values as $valString) {
-            if ($existingByValue->has($valString)) {
+        foreach ($valuesInput as $index => $item) {
+            $valString = '';
+            $id = null;
+            $removeImage = false;
+
+            if (is_array($item)) {
+                $valString = trim($item['value'] ?? '');
+                $id = !empty($item['id']) ? (int)$item['id'] : null;
+                $removeImage = !empty($item['remove_image']);
+            } else {
+                $valString = trim((string)$item);
+            }
+
+            if ($valString === '') {
+                continue;
+            }
+
+            // Check if file was uploaded for this value index
+            $uploadedFile = null;
+            if ($request->hasFile("value_image_{$index}")) {
+                $uploadedFile = $request->file("value_image_{$index}");
+            } elseif ($request->hasFile("value_images.{$index}")) {
+                $uploadedFile = $request->file("value_images.{$index}");
+            }
+
+            // Find existing record
+            $existingVal = null;
+            if ($id && $existingById->has($id)) {
+                $existingVal = $existingById->get($id);
+            } elseif ($existingByValue->has($valString)) {
                 $existingVal = $existingByValue->get($valString);
+            }
+
+            $imagePath = $existingVal ? $existingVal->image : null;
+
+            // Handle image upload / removal
+            if ($uploadedFile) {
+                if ($imagePath) {
+                    $this->deleteFile($imagePath);
+                }
+                $imagePath = $this->uploadFile($uploadedFile, 'attribute_values');
+            } elseif ($removeImage) {
+                if ($imagePath) {
+                    $this->deleteFile($imagePath);
+                }
+                $imagePath = null;
+            }
+
+            if ($existingVal) {
                 if ($existingVal->trashed()) {
                     $existingVal->restore();
                 }
+                $existingVal->update([
+                    'value' => $valString,
+                    'image' => $imagePath,
+                ]);
                 $processedIds[] = $existingVal->id;
+                $savedValuesList[] = [
+                    'id' => $existingVal->id,
+                    'value' => $valString,
+                    'image' => $imagePath,
+                ];
             } else {
                 $newVal = $attribute->attributeValues()->create([
                     'value' => $valString,
+                    'image' => $imagePath,
                 ]);
                 $processedIds[] = $newVal->id;
+                $savedValuesList[] = [
+                    'id' => $newVal->id,
+                    'value' => $valString,
+                    'image' => $imagePath,
+                ];
             }
         }
 
-        // Soft-delete any existing attribute values that are NOT in the processed list
-        $attribute->attributeValues()
-            ->whereNotIn('id', $processedIds)
-            ->delete();
+        // Clean up deleted values and their images
+        $toDelete = $attribute->attributeValues()->whereNotIn('id', $processedIds)->get();
+        foreach ($toDelete as $deletedVal) {
+            if ($deletedVal->image) {
+                $this->deleteFile($deletedVal->image);
+            }
+            $deletedVal->delete();
+        }
+
+        return $savedValuesList;
     }
 }
