@@ -15,7 +15,7 @@ class UpdateBannerRequest extends BaseFormRequest
             'type' => ['required', Rule::enum(BannerTypeEnum::class)],
             'short_description' => ['nullable', 'string', 'max:250'],
             'redirect_url' => ['nullable', 'string', 'max:2048'],
-            'banner_image' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+            'banner_image' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
             'is_active' => ['boolean'],
         ];
     }
