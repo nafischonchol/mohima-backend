@@ -13,6 +13,13 @@ class AttributeValue extends Model
         'attribute_id',
         'value',
         'image',
+        'meta_title',
+        'meta_description',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
     ];
 
     public function attribute()

@@ -25,6 +25,9 @@ class AttributeResource extends JsonResource
                     'value' => $val->value,
                     'image' => $val->image ? Storage::url($val->image) : null,
                     'image_relative' => $val->image,
+                    'meta_title' => $val->meta_title,
+                    'meta_description' => $val->meta_description,
+                    'is_active' => (bool)($val->is_active ?? true),
                 ];
             }
         } elseif (is_array($this->values)) {
@@ -35,6 +38,9 @@ class AttributeResource extends JsonResource
                         'value' => $val['value'] ?? '',
                         'image' => !empty($val['image']) ? Storage::url($val['image']) : null,
                         'image_relative' => $val['image'] ?? null,
+                        'meta_title' => $val['meta_title'] ?? null,
+                        'meta_description' => $val['meta_description'] ?? null,
+                        'is_active' => (bool)($val['is_active'] ?? true),
                     ];
                 } else {
                     $valuesData[] = [
@@ -42,6 +48,9 @@ class AttributeResource extends JsonResource
                         'value' => (string)$val,
                         'image' => null,
                         'image_relative' => null,
+                        'meta_title' => null,
+                        'meta_description' => null,
+                        'is_active' => true,
                     ];
                 }
             }

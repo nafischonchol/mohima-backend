@@ -139,11 +139,21 @@ class AttributeService
             $valString = '';
             $id = null;
             $removeImage = false;
+            $metaTitle = null;
+            $metaDescription = null;
+            $isActive = true;
 
             if (is_array($item)) {
                 $valString = trim($item['value'] ?? '');
                 $id = !empty($item['id']) ? (int)$item['id'] : null;
                 $removeImage = !empty($item['remove_image']);
+                $metaTitle = isset($item['meta_title']) ? trim((string)$item['meta_title']) : null;
+                $metaDescription = isset($item['meta_description']) ? trim((string)$item['meta_description']) : null;
+                if (isset($item['is_active'])) {
+                    $isActive = filter_var($item['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true;
+                }
+                if ($metaTitle === '') $metaTitle = null;
+                if ($metaDescription === '') $metaDescription = null;
             } else {
                 $valString = trim((string)$item);
             }
@@ -190,23 +200,35 @@ class AttributeService
                 $existingVal->update([
                     'value' => $valString,
                     'image' => $imagePath,
+                    'meta_title' => $metaTitle,
+                    'meta_description' => $metaDescription,
+                    'is_active' => $isActive,
                 ]);
                 $processedIds[] = $existingVal->id;
                 $savedValuesList[] = [
                     'id' => $existingVal->id,
                     'value' => $valString,
                     'image' => $imagePath,
+                    'meta_title' => $metaTitle,
+                    'meta_description' => $metaDescription,
+                    'is_active' => $isActive,
                 ];
             } else {
                 $newVal = $attribute->attributeValues()->create([
                     'value' => $valString,
                     'image' => $imagePath,
+                    'meta_title' => $metaTitle,
+                    'meta_description' => $metaDescription,
+                    'is_active' => $isActive,
                 ]);
                 $processedIds[] = $newVal->id;
                 $savedValuesList[] = [
                     'id' => $newVal->id,
                     'value' => $valString,
                     'image' => $imagePath,
+                    'meta_title' => $metaTitle,
+                    'meta_description' => $metaDescription,
+                    'is_active' => $isActive,
                 ];
             }
         }
