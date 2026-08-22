@@ -99,7 +99,15 @@ class ProductService
             $product = Cache::get($cacheKey);
         } else {
             $product = Product::where('status', 'active')
-                ->with(['category', 'brand', 'specifications.attribute', 'variants.attributeValues.attribute', 'images'])
+                ->with([
+                    'category' => function ($query) {
+                        $query->with('ancestors');
+                    },
+                    'brand',
+                    'specifications.attribute',
+                    'variants.attributeValues.attribute',
+                    'images'
+                ])
                 ->findOrFail($id);
 
             Cache::put($cacheKey, $product, now()->addHours(2));

@@ -102,9 +102,31 @@ class ProductDetailsResource extends JsonResource
             'meta_keywords' => $this->meta_keywords,
             'ingredients' => $keyIngredientValue,
             'category' => $this->whenLoaded('category', function () {
+                $breadcrumbs = [];
+                if ($this->category) {
+                    $ancestors = $this->category->relationLoaded('ancestors') ? $this->category->ancestors : collect();
+                    foreach ($ancestors as $ancestor) {
+                        $breadcrumbs[] = [
+                            'id' => $ancestor->id,
+                            'name' => $ancestor->name,
+                            'slug' => $ancestor->slug,
+                            'slug_url' => $ancestor->slug_url,
+                        ];
+                    }
+                    $breadcrumbs[] = [
+                        'id' => $this->category->id,
+                        'name' => $this->category->name,
+                        'slug' => $this->category->slug,
+                        'slug_url' => $this->category->slug_url,
+                    ];
+                }
+
                 return [
                     'id' => $this->category->id,
                     'name' => $this->category->name,
+                    'slug' => $this->category->slug,
+                    'slug_url' => $this->category->slug_url,
+                    'breadcrumbs' => $breadcrumbs,
                 ];
             }),
             'brand' => $this->whenLoaded('brand', function () {
