@@ -172,11 +172,23 @@ class ProductService
             });
         }
 
+        $seoData = null;
+
         if ($request->filled('category_slug')) {
             $category = Category::where('slug', $request->input('category_slug'))->first();
             if ($category) {
                 $categoryIds = $category->descendantsAndSelf()->pluck('id');
                 $query->whereIn('category_id', $categoryIds);
+                $seoData = [
+                    'type' => 'category',
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'meta_title' => $category->meta_title ?? $category->name,
+                    'meta_keyword' => $category->meta_keyword,
+                    'meta_description' => $category->meta_description,
+                    'meta_image' => $category->meta_image,
+                ];
             } else {
                 $query->whereRaw('1 = 0');
             }
@@ -186,6 +198,18 @@ class ProductService
             $brand = Brand::where('slug', $request->input('brand_slug'))->first();
             if ($brand) {
                 $query->where('brand_id', $brand->id);
+                if (!$seoData) {
+                    $seoData = [
+                        'type' => 'brand',
+                        'id' => $brand->id,
+                        'name' => $brand->name,
+                        'slug' => $brand->slug,
+                        'meta_title' => $brand->meta_title ?? $brand->name,
+                        'meta_keyword' => $brand->meta_keyword,
+                        'meta_description' => $brand->meta_description,
+                        'meta_image' => $brand->meta_image,
+                    ];
+                }
             } else {
                 $query->whereRaw('1 = 0');
             }
@@ -276,8 +300,11 @@ class ProductService
         $products = $query->paginate($perPage, ['*'], 'page', $page);
 
         return responseSuccess([
-            'items' => ProductResource::collection($products),
-            'pagination' => pagination($products)
+            'items' => [
+                "products" => ProductResource::collection($products),
+                "seo" => $seoData,
+            ],
+            'pagination' => pagination($products),
         ]);
     }
 
@@ -287,13 +314,14 @@ class ProductService
             $categories = Category::where('is_active', true)
                 ->whereNull('parent_id')
                 ->with(['children' => function ($q) {
+                    $q->select("id", "name", "slug", "parent_id");
                     $q->where('is_active', true);
                 }])
-                ->select(['id', 'name', 'slug', 'parent_id', 'icon'])
+                ->select(['id', 'name', 'slug', 'parent_id'])
                 ->get();
 
             $brands = Brand::where('is_active', true)
-                ->select(['id', 'name', 'slug', 'icon'])
+                ->select(['id', 'name', 'slug'])
                 ->get();
 
             $attributes = Attribute::where('is_active', true)
@@ -319,4 +347,3 @@ class ProductService
         });
     }
 }
-
