@@ -172,16 +172,23 @@ class ProductService
             });
         }
 
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
+        if ($request->filled('category_slug')) {
+            $category = Category::where('slug', $request->input('category_slug'))->first();
+            if ($category) {
+                $categoryIds = $category->descendantsAndSelf()->pluck('id');
+                $query->whereIn('category_id', $categoryIds);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
-        if ($request->filled('sub_category_id')) {
-            $query->where('category_id', $request->input('sub_category_id'));
-        }
-
-        if ($request->filled('brand_id')) {
-            $query->where('brand_id', $request->input('brand_id'));
+        if ($request->filled('brand_slug')) {
+            $brand = Brand::where('slug', $request->input('brand_slug'))->first();
+            if ($brand) {
+                $query->where('brand_id', $brand->id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->filled('concern_id')) {

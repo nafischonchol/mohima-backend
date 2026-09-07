@@ -11,9 +11,8 @@ class ProductFilterRequest extends BaseFormRequest
     {
         return [
             "search_text" => ["nullable", "string", "max:250"],
-            "category_id" => ["nullable", "exists:categories,id"],
-            "sub_category_id" => ["nullable", "exists:categories,id"],
-            "brand_id" => ["nullable", "exists:brands,id"],
+            "category_slug" => ["nullable", "string", "exists:categories,slug"],
+            "brand_slug" => ["nullable", "string", "exists:brands,slug"],
             "concern_id" => ["nullable"],
             "attribute_value_id" => ["nullable"],
             "min_price" => ["nullable", "numeric", "min:0"],
